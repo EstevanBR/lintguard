@@ -1,84 +1,82 @@
 import Foundation
 import RegexBuilder
 
-let pattern = #"\`\`\`(?<language>[\w\s]+) lintguard: ?(?<filename>(?:[\/\w\-\.]+)*[\w\-\.]+)(#L(?<firstline>\d*))(-L(?<lastline>\d*))?[\t ]?\n(?<snippet>([\s\S]*?))\n\`\`\`"#
+let markdownFilePaths = ProcessInfo.processInfo.arguments.filter { $0.hasSuffix(".md") }
 
+guard !markdownFilePaths.isEmpty else {
+    print(Color.yellow.rawValue + "No markdown files passed")
+    exit(1)
+}
+
+markdownFilePaths.forEach { markdownFilePath in
+    guard FileManager().fileExists(atPath: markdownFilePath) else {
+        print(Color.red.rawValue + "file does not exist: \(markdownFilePath)")
+        exit(1)
+    }
+}
+
+let pattern = #"\`\`\`(?<language>[\w\s]+) lintguard: ?(?<filename>(?:[\/\w\-\.]+)*[\w\-\.]+)(#L(?<firstline>\d*))(-L(?<lastline>\d*))?[\t ]?\n(?<snippet>([\s\S]*?))\n\`\`\`"#
 let regex = try NSRegularExpression(pattern: pattern)
 
-let markdownText = """
-```markdown lintguard: ./EXAMPLE.md#L1-L2
-Hello
-World
-```
+markdownFilePaths.forEach { markdownFilePath in
+    guard let markdownData = FileManager().contents(atPath: markdownFilePath) else { exit(1) }
+    guard let markdownText = String(data: markdownData, encoding: .utf8) else { exit(1) }
 
-```markdown lintguard: ./EXAMPLE.md#L1-L2
-Hello
-Worldz
-```
+    for match in regex.matches(in: markdownText, options: [], range: NSRange(location: 0, length: markdownText.utf8.count)) {
+        guard let languageRange = Range(match.range(withName: "language"), in: markdownText),
+              let filenameRange = Range(match.range(withName: "filename"), in: markdownText),
+              let firstlineRange = Range(match.range(withName: "firstline"), in: markdownText),
+              let lastlineRange = Range(match.range(withName: "lastline"), in: markdownText),
+              let snippetRange = Range(match.range(withName: "snippet"), in: markdownText)
+        else {
+            fatalError()
+        }
 
-```markdown lintguard: ./EXAMPLE.md#L1-L2
-Hello
-World
+        let language = String(markdownText[languageRange])
+        let filename = String(markdownText[filenameRange])
 
-```
+        guard let firstline = Int(markdownText[firstlineRange]),
+              let lastline = Int(markdownText[safe: lastlineRange] ?? markdownText[firstlineRange])
+        else {
+            print(Color.red.rawValue + "Could not get firstline or lastline")
+            exit(1)
+        }
 
-```markdown lintguard: ./EXAMPLE.md#L1
-Hello
-```
-"""
+        let snippet = String(markdownText[snippetRange])//.split(separator: "\n").joined(separator: "\n")
 
-for match in regex.matches(in: markdownText, options: [], range: NSRange(location: 0, length: markdownText.utf8.count)) {
-    guard let languageRange = Range(match.range(withName: "language"), in: markdownText),
-          let filenameRange = Range(match.range(withName: "filename"), in: markdownText),
-          let firstlineRange = Range(match.range(withName: "firstline"), in: markdownText),
-          let lastlineRange = Range(match.range(withName: "lastline"), in: markdownText),
-          let snippetRange = Range(match.range(withName: "snippet"), in: markdownText)
-    else {
-        print(Color.red.rawValue + "You suck lol")
-        exit(1)
-    }
+        guard FileManager().fileExists(atPath: filename) else {
+            print(Color.red.rawValue + "No file")
+            exit(1)
+        }
+        
+        guard let fileData = FileManager().contents(atPath: filename),
+            let fileString = String(data: fileData, encoding: .utf8) else {
+            print(Color.red.rawValue + "No file data")
+            exit(1)
+        }
 
-    let language = String(markdownText[languageRange])
-    let filename = String(markdownText[filenameRange])
-    let firstline = Int(markdownText[firstlineRange])
-    let lastline = Int(markdownText[safe: lastlineRange] ?? markdownText[firstlineRange])
-    guard let firstline, let lastline else {
-        print(Color.red.rawValue + "Could not get firstline or lastline")
-        exit(1)
-    }
-    let snippet = String(markdownText[snippetRange])//.split(separator: "\n").joined(separator: "\n")
+        let snippetFromFile = fileString
+            .components(separatedBy: .newlines)[(firstline-1)...(lastline-1)]
+            //.split(separator: "\n")[(firstline-1)...(lastline-1)]
+            .joined(separator: "\n")
+        
+        guard snippet == snippetFromFile else {
+            print(Color.red.rawValue + "Snippet in \(markdownFilePath): \(filename)#L\(firstline)-L\(lastline)")
+            print(Color.red.rawValue + """
+            Failure: Snippets do not match
+            From markdown:
+            ```
+            \(snippet)
+            ```
+            From file:
+            ```
+            \(snippetFromFile)
+            ```
+            """)
+            exit(1)
+        }
 
-    print("Match: \(language) \(filename) \(firstline)-\(lastline)")
-
-    guard FileManager().fileExists(atPath: filename) else {
-        print(Color.red.rawValue + "No file")
-        exit(1)
-    }
-    
-    guard let fileData = FileManager().contents(atPath: filename),
-          let fileString = String(data: fileData, encoding: .utf8) else {
-        print(Color.red.rawValue + "No file data")
-        exit(1)
-    }
-
-    let snippetFromFile = fileString
-        .components(separatedBy: .newlines)[(firstline-1)...(lastline-1)]
-        //.split(separator: "\n")[(firstline-1)...(lastline-1)]
-        .joined(separator: "\n")
-    
-    guard snippet == snippetFromFile else {
-        print(Color.red.rawValue + """
-        Failure: Snippets do not match
-        From markdown:
-        ```
-        \(snippet)
-        ```
-        From file:
-        ```
-        \(snippetFromFile)
-        ```
-        """)
-        exit(1)
+        print(Color.green.rawValue + "Snippet in \(markdownFilePath): \(filename)#L\(firstline)-L\(lastline)")
     }
 }
 
