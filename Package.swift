@@ -4,9 +4,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "lintguard",
+    name: "LintGuard",
+    products: [
+        .executable(
+            name: "lintguard",
+            targets: ["LintGuard"]
+        )
+    ],
     targets: [
         .executableTarget(
-            name: "lintguard"),
+            name: "LintGuard"
+        ),
     ]
 )

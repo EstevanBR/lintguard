@@ -10,6 +10,21 @@ let markdownText = """
 Hello
 World
 ```
+
+```markdown lintguard: ./EXAMPLE.md#L1-L2
+Hello
+Worldz
+```
+
+```markdown lintguard: ./EXAMPLE.md#L1-L2
+Hello
+World
+
+```
+
+```markdown lintguard: ./EXAMPLE.md#L1
+Hello
+```
 """
 
 for match in regex.matches(in: markdownText, options: [], range: NSRange(location: 0, length: markdownText.utf8.count)) {
@@ -28,12 +43,12 @@ for match in regex.matches(in: markdownText, options: [], range: NSRange(locatio
     let firstline = Int(markdownText[firstlineRange])
     let lastline = Int(markdownText[safe: lastlineRange] ?? markdownText[firstlineRange])
     guard let firstline, let lastline else {
-        print(Color.red.rawValue + "Could not get firstline or lastline" )
+        print(Color.red.rawValue + "Could not get firstline or lastline")
         exit(1)
     }
     let snippet = String(markdownText[snippetRange])//.split(separator: "\n").joined(separator: "\n")
 
-    print("Match: \(language) \(filename) \(firstline)-\(lastline))")
+    print("Match: \(language) \(filename) \(firstline)-\(lastline)")
 
     guard FileManager().fileExists(atPath: filename) else {
         print(Color.red.rawValue + "No file")
@@ -53,21 +68,16 @@ for match in regex.matches(in: markdownText, options: [], range: NSRange(locatio
     
     guard snippet == snippetFromFile else {
         print(Color.red.rawValue + """
-        snippet from markdown:
+        Failure: Snippets do not match
+        From markdown:
         ```
         \(snippet)
         ```
-        snippet from file:
+        From file:
         ```
         \(snippetFromFile)
         ```
         """)
-
-        // let diff = snippetFromFile.difference(from: snippet)
-        // _ = diff.inferringMoves()
-        // print(diff)
-
-        print(Color.red.rawValue + "snippets do not match")
         exit(1)
     }
 }
@@ -87,21 +97,21 @@ extension Collection {
 
 enum Color: String {
     case reset = "\u{001B}[0;0m"
-    case black = "\u{001B}[0;30m"
+    // case black = "\u{001B}[0;30m"
     case red = "\u{001B}[0;31m"
     case green = "\u{001B}[0;32m"
     case yellow = "\u{001B}[0;33m"
-    case blue = "\u{001B}[0;34m"
-    case magenta = "\u{001B}[0;35m"
-    case cyan = "\u{001B}[0;36m"
-    case white = "\u{001B}[0;37m"
+    // case blue = "\u{001B}[0;34m"
+    // case magenta = "\u{001B}[0;35m"
+    // case cyan = "\u{001B}[0;36m"
+    // case white = "\u{001B}[0;37m"
 
-    case bgBlack = "\u{001B}[0;40m"
-    case bgRed = "\u{001B}[0;41m"
-    case bgGreen = "\u{001B}[0;42m"
-    case bgYellow = "\u{001B}[0;43m"
-    case bgBlue = "\u{001B}[0;44m"
-    case bgMagenta = "\u{001B}[0;45m"
-    case bgCyan = "\u{001B}[0;46m"
-    case bgWhite = "\u{001B}[0;47m"
+    // case bgBlack = "\u{001B}[0;40m"
+    // case bgRed = "\u{001B}[0;41m"
+    // case bgGreen = "\u{001B}[0;42m"
+    // case bgYellow = "\u{001B}[0;43m"
+    // case bgBlue = "\u{001B}[0;44m"
+    // case bgMagenta = "\u{001B}[0;45m"
+    // case bgCyan = "\u{001B}[0;46m"
+    // case bgWhite = "\u{001B}[0;47m"
 }
