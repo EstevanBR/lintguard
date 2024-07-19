@@ -24,3 +24,7 @@ Hello
 ```markdown lintguard: ./EXAMPLE.md#L1
 Helloq
 ```
+
+```
+Hello
+```
