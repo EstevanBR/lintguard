@@ -24,6 +24,8 @@ let regex = try NSRegularExpression(pattern: pattern)
 
 var errors = [Swift.Error]()
 
+var results = [String]()
+
 markdownFilePaths.forEach { markdownFilePath in
     do {
         guard let markdownData = FileManager().contents(atPath: markdownFilePath) else {
@@ -71,7 +73,7 @@ markdownFilePaths.forEach { markdownFilePath in
                     .joined(separator: "\n")
                 
                 guard codeBlockFromMarkdown == codeBlockFromFile else {
-                    print(Color.red + "Code block in \(markdownFilePath):\(lineNumber) referencing \(filename)#L\(firstline)-L\(lastline)")
+                    results.append(Color.red + "Code block in \(markdownFilePath):\(lineNumber) referencing \(filename)#L\(firstline)-L\(lastline)")
                     throw Error.codeBlockOutOfDate(
                         lineNumber: lineNumber,
                         language: language,
@@ -84,40 +86,52 @@ markdownFilePaths.forEach { markdownFilePath in
                     )
                 }
 
-                print(Color.green + "Code block in \(markdownFilePath):\(lineNumber) referencing \(filename)#L\(firstline)-L\(lastline)")
+                results.append(Color.green + "Code block in \(markdownFilePath):\(lineNumber) referencing \(filename)#L\(firstline)-L\(lastline)")
             } catch {
                 errors.append(error)
             }
         }
     } catch {
         errors.append(error)
+        fatalError()
     }
 }
 
-if !errors.isEmpty {
-    print("""
-    
-    Failures:
-    
-    """)
-}
-
-for error in errors {
-    if let error = error as? LocalizedError {
-        if let errorDescription = error.errorDescription {
-            print(errorDescription)
-        } else {
-            print(error.localizedDescription)
-        }
-        
-        if let recoverySuggestion = error.recoverySuggestion {
-            print("Recovery suggestion: " + recoverySuggestion)
-        }
-    } else {
-        print(error.localizedDescription)
-    }
-}
+print(results: results, errors: errors)
 
 guard errors.isEmpty else {
     exit(1)
+}
+
+func print(results: [String], errors: [Swift.Error]) {
+    print(results.joined(separator: "\n"))
+    if !errors.isEmpty {
+        print("""
+        
+        Failures:
+        
+        """)
+    }
+    printErrors(errors)
+}
+
+func printErrors(_ errors: [Swift.Error]) {
+    var errorStrings = [String]()
+    errors.forEach { error in
+        if let error = error as? LocalizedError {
+            if let errorDescription = error.errorDescription {
+                errorStrings.append(errorDescription)
+            } else {
+                errorStrings.append(error.localizedDescription)
+            }
+            
+            if let recoverySuggestion = error.recoverySuggestion {
+                errorStrings.append(Color.yellow + "    Recovery suggestion: " + recoverySuggestion + "\n")
+            }
+        } else {
+            errorStrings.append(error.localizedDescription)
+        }
+    }
+
+    print(errorStrings.joined(separator: "\n"))
 }
