@@ -38,13 +38,8 @@ markdownFilePaths.forEach { markdownFilePath in
             guard let languageRange = Range(match.range(withName: "language"), in: markdownText),
                 let filenameRange = Range(match.range(withName: "filename"), in: markdownText),
                 let firstlineRange = Range(match.range(withName: "firstline"), in: markdownText),
-                let codeBlockRange = Range(match.range(withName: "codeblock"), in: markdownText)
-            else {
-                print("WTF")
-                continue
-            }
-
-            guard let thisRange = Range(NSRange(location: 0, length: match.range.location), in: markdownText) else {
+                let codeBlockRange = Range(match.range(withName: "codeblock"), in: markdownText),
+                let thisRange = Range(NSRange(location: 0, length: match.range.location), in: markdownText) else {
                 fatalError()
             }
 
