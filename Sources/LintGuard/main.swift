@@ -8,7 +8,7 @@ enum Error: Swift.Error, LocalizedError {
     case fileDoesNotExist(_ path: String)
     case noDataFromFile(_ path: String)
     case noStringFromFile(_ path: String)
-    case codeBlockOutOfDate(language: String, markdownFilePath: String, filename: String, firstline: Int, lastline: Int, snippetFromMarkdown: String, snippetFromFile: String)
+    case codeBlockOutOfDate(language: String, markdownFilePath: String, filename: String, firstline: Int, lastline: Int, codeBlockFromMarkdown: String, codeBlockFromFile: String)
 
     var errorDescription: String? {
         switch self {
@@ -24,16 +24,16 @@ enum Error: Swift.Error, LocalizedError {
             case .noStringFromFile(let path):
                 Color.red + "No String from file: \(path)"
             
-            case let .codeBlockOutOfDate(language, markdownFilePath, filename, firstline, lastline, snippetFromMarkdown, snippetFromFile):
+            case let .codeBlockOutOfDate(language, markdownFilePath, filename, firstline, lastline, codeBlockFromMarkdown, codeBlockFromFile):
                 Color.red + """
                 Following code block in \(markdownFilePath) is out of date:
                 ```\(language) lintguard: \(filename)#L\(firstline)-L\(lastline)
-                \(snippetFromMarkdown)
+                \(codeBlockFromMarkdown)
                 ```
                 
                 Actual code block from file:
                 ```
-                \(snippetFromFile)
+                \(codeBlockFromFile)
                 ```
                 """
         }
@@ -61,7 +61,7 @@ do {
         }
     }
 
-    let pattern = #"\`\`\`(?<language>[\w\s]+) lintguard: ?(?<filename>(?:[\/\w\-\.]+)*[\w\-\.]+)(#L(?<firstline>\d*))(-L(?<lastline>\d*))?[\t ]?\n(?<snippet>([\s\S]*?))\n\`\`\`"#
+    let pattern = #"\`\`\`(?<language>[\w\s]+) lintguard: ?(?<filename>(?:[\/\w\-\.]+)*[\w\-\.]+)(#L(?<firstline>\d*))(-L(?<lastline>\d*))?[\t ]?\n(?<codeblock>([\s\S]*?))\n\`\`\`"#
     let regex = try NSRegularExpression(pattern: pattern)
 
     try markdownFilePaths.forEach { markdownFilePath in
@@ -73,10 +73,10 @@ do {
 
         for match in regex.matches(in: markdownText, options: [], range: NSRange(location: 0, length: markdownText.utf8.count)) {
             guard let languageRange = Range(match.range(withName: "language"), in: markdownText),
-                let filenameRange = Range(match.range(withName: "filename"), in: markdownText),
-                let firstlineRange = Range(match.range(withName: "firstline"), in: markdownText),
-                let lastlineRange = Range(match.range(withName: "lastline"), in: markdownText),
-                let snippetRange = Range(match.range(withName: "snippet"), in: markdownText)
+                  let filenameRange = Range(match.range(withName: "filename"), in: markdownText),
+                  let firstlineRange = Range(match.range(withName: "firstline"), in: markdownText),
+                  let lastlineRange = Range(match.range(withName: "lastline"), in: markdownText),
+                  let codeBlockRange = Range(match.range(withName: "codeblock"), in: markdownText)
             else {
                 fatalError()
             }
@@ -89,7 +89,7 @@ do {
                 fatalError("Could not get firstline or lastline")
             }
 
-            let snippetFromMarkdown = String(markdownText[snippetRange])
+            let codeBlockFromMarkdown = String(markdownText[codeBlockRange])
 
             guard FileManager().fileExists(atPath: filename) else {
                 throw Error.fileDoesNotExist(filename)
@@ -99,23 +99,23 @@ do {
                 throw Error.noDataFromFile(filename)
             }
 
-            let snippetFromFile = fileString
+            let codeBlockFromFile = fileString
                 .components(separatedBy: .newlines)[(firstline-1)...(lastline-1)]
                 .joined(separator: "\n")
             
-            guard snippetFromMarkdown == snippetFromFile else {
+            guard codeBlockFromMarkdown == codeBlockFromFile else {
                 throw Error.codeBlockOutOfDate(
                     language: language,
                     markdownFilePath: markdownFilePath,
                     filename: filename,
                     firstline: firstline,
                     lastline: lastline,
-                    snippetFromMarkdown: snippetFromMarkdown,
-                    snippetFromFile: snippetFromFile
+                    codeBlockFromMarkdown: codeBlockFromMarkdown,
+                    codeBlockFromFile: codeBlockFromFile
                 )
             }
 
-            print(Color.green + "Snippet in \(markdownFilePath): \(filename)#L\(firstline)-L\(lastline)")
+            print(Color.green + "Code block in \(markdownFilePath): \(filename)#L\(firstline)-L\(lastline)")
         }
     }
 } catch {
