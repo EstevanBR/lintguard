@@ -20,3 +20,7 @@ World
 ```markdown lintguard: ./EXAMPLE.md#L1
 Hello
 ```
+
+```markdown lintguard: ./EXAMPLE.md#L1
+Helloq
+```

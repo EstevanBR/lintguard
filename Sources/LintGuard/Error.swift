@@ -5,7 +5,7 @@ enum Error: Swift.Error, LocalizedError {
     case fileDoesNotExist(_ path: String)
     case noDataFromFile(_ path: String)
     case noStringFromFile(_ path: String)
-    case codeBlockOutOfDate(language: String, markdownFilePath: String, filename: String, firstline: Int, lastline: Int, codeBlockFromMarkdown: String, codeBlockFromFile: String)
+    case codeBlockOutOfDate(lineNumber: Int, language: String, markdownFilePath: String, filename: String, firstline: Int, lastline: Int, codeBlockFromMarkdown: String, codeBlockFromFile: String)
 
     var errorDescription: String? {
         switch self {
@@ -21,17 +21,17 @@ enum Error: Swift.Error, LocalizedError {
             case .noStringFromFile(let path):
                 Color.red + "No String from file: \(path)"
             
-            case let .codeBlockOutOfDate(language, markdownFilePath, filename, firstline, lastline, codeBlockFromMarkdown, codeBlockFromFile):
+            case let .codeBlockOutOfDate(lineNumber, language, markdownFilePath, filename, firstline, lastline, codeBlockFromMarkdown, codeBlockFromFile):
                 Color.red + """
-                Following code block in \(markdownFilePath) is out of date:
-                ```\(language) lintguard: \(filename)#L\(firstline)-L\(lastline)
-                \(codeBlockFromMarkdown)
-                ```
-                
-                Actual code block from file:
-                ```
-                \(codeBlockFromFile)
-                ```
+                Following code block in \(markdownFilePath):\(lineNumber) is out of date:
+                    ```\(language) lintguard: \(filename)#L\(firstline)-L\(lastline)
+                    \(codeBlockFromMarkdown.components(separatedBy: .newlines).joined(separator: "\n    "))
+                    ```
+                    
+                    Actual code block from file:
+                    ```
+                    \(codeBlockFromFile.components(separatedBy: .newlines).joined(separator: "\n    "))
+                    ```
                 """
         }
     }
