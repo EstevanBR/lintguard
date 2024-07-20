@@ -119,7 +119,7 @@ private func printErrors(_ errors: [Swift.Error]) {
             }
             
             if let recoverySuggestion = error.recoverySuggestion {
-                errorStrings.append(Color.yellow + "    Recovery suggestion: " + recoverySuggestion + "\n")
+                errorStrings.append(Color.yellow + "Recovery suggestion: \(recoverySuggestion)\n\n")
             }
         } else {
             errorStrings.append(error.localizedDescription)

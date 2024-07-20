@@ -23,15 +23,15 @@ enum Error: Swift.Error, LocalizedError {
             
             case let .codeBlockOutOfDate(lineNumber, language, markdownFilePath, filename, firstline, lastline, codeBlockFromMarkdown, codeBlockFromFile):
                 Color.red + """
-                Following code block in \(markdownFilePath):\(lineNumber) is out of date:
-                    ```\(language) lintguard: \(filename)#L\(firstline)-L\(lastline)
-                    \(codeBlockFromMarkdown.components(separatedBy: .newlines).joined(separator: "\n    "))
-                    ```
-                    
-                    Actual code block from file:
-                    ```
-                    \(codeBlockFromFile.components(separatedBy: .newlines).joined(separator: "\n    "))
-                    ```
+                Code block @\(markdownFilePath):\(lineNumber) does not match code block @\(filename)#L\(firstline)-L\(lastline)
+                Out of date code block:
+                ```\(language) lintguard: \(filename)#L\(firstline)-L\(lastline)
+                \(codeBlockFromMarkdown.components(separatedBy: .newlines).joined(separator: "\n"))
+                ```
+                Actual code block from \(filename)#L\(firstline)-L\(lastline):
+                ```
+                \(codeBlockFromFile.components(separatedBy: .newlines).joined(separator: "\n"))
+                ```
                 """
         }
     }
