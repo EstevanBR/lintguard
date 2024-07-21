@@ -22,15 +22,11 @@ enum Error: Swift.Error, LocalizedError {
                 Color.red + "No String from file: \(path)"
             
             case let .codeBlockOutOfDate(lineNumber, language, markdownFilePath, filename, firstline, lastline, codeBlockFromMarkdown, codeBlockFromFile):
-                Color.red + """
-                Code block @\(markdownFilePath):\(lineNumber) does not match code block @\(filename)#L\(firstline)-L\(lastline)
-                Out of date code block:
+                Color.red +
+                """
+                Code block @\(markdownFilePath):\(lineNumber) does not match code block @\(filename)#L\(firstline)-L\(lastline)\(Color.bgBlack.rawValue)
                 ```\(language) lintguard: \(filename)#L\(firstline)-L\(lastline)
-                \(codeBlockFromMarkdown.components(separatedBy: .newlines).joined(separator: "\n"))
-                ```
-                Actual code block from \(filename)#L\(firstline)-L\(lastline):
-                ```
-                \(codeBlockFromFile.components(separatedBy: .newlines).joined(separator: "\n"))
+                \(codeBlockFromMarkdown.colorizedDifference(from: codeBlockFromFile, color: .bgBlack))\(Color.bgBlack.rawValue)
                 ```
                 """
         }
