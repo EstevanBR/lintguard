@@ -21,10 +21,7 @@ struct LintGuard {
         }
 
         print(results: results)
-
-        if errors.isEmpty == false {
-            printErrors(errors)
-        }
+        printErrors(errors)
 
         exit(errors.isEmpty ? 0 : 1)
     }
@@ -102,7 +99,7 @@ private func process(markdownFilePath: String, markdownText: String, results: in
 private func print(results: [ProcessResult]) {
     guard !results.isEmpty else { return }
     print("Results:\n")
-    print(results.map { $0.description }.joined(separator: "\n"), terminator: "")
+    print(results.map { $0.description }.joined(separator: "\n"))
 }
 
 private func printErrors(_ errors: [Swift.Error]) {
