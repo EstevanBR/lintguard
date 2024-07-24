@@ -3,6 +3,7 @@ import protocol Foundation.LocalizedError
 enum Error: Swift.Error, LocalizedError {
     case noMarkdownFilesPassed
     case fileDoesNotExist(_ path: String)
+    case filesDoNotExist(_ paths: [String])
     case noDataFromFile(_ path: String)
     case noStringFromFile(_ path: String)
     case codeBlockOutOfDate(lineNumber: Int, language: String, markdownFilePath: String, filename: String, firstline: Int, lastline: Int, codeBlockFromMarkdown: String, codeBlockFromFile: String)
@@ -14,6 +15,12 @@ enum Error: Swift.Error, LocalizedError {
             
             case .fileDoesNotExist(let path):
                 Color.red + "File does not exist: \(path)"
+            
+            case .filesDoNotExist(let paths):
+                Color.red + """
+                Files do not exist:
+                    - \(paths.joined(separator: "\n    - "))
+                """
             
             case .noDataFromFile(let path):
                 Color.red + "No Data from file: \(path)"
@@ -40,6 +47,7 @@ enum Error: Swift.Error, LocalizedError {
         switch self {
             case .noMarkdownFilesPassed: "Pass markdown files ending in .md to lintguard"
             case .fileDoesNotExist: "Did you mistype the filename?"
+            case .filesDoNotExist: "Did you mistype any filenames?"
             case .noDataFromFile: nil
             case .noStringFromFile: nil
             case .codeBlockOutOfDate: "Update the code block"

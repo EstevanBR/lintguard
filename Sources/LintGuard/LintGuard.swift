@@ -6,15 +6,14 @@ struct LintGuard {
     static private var results = [ProcessResult]()
     
     static func main() throws {
-        let markdownFilePaths = try getMarkdownFilePaths()
-
         do {
+            let markdownFilePaths = try getMarkdownFilePaths()
             try markdownFilePaths.forEach { path in
                 let markdownText = try loadText(fromFilePath: path)
                 do {
                     try process(markdownFilePath: path, markdownText: markdownText, results: &results, errors: &errors)
                 } catch {
-
+                    errors.append(error)
                 }
             }
         } catch {
@@ -22,7 +21,10 @@ struct LintGuard {
         }
 
         print(results: results)
-        printErrors(errors)
+
+        if errors.isEmpty == false {
+            printErrors(errors)
+        }
 
         exit(errors.isEmpty ? 0 : 1)
     }
@@ -38,10 +40,7 @@ private func getMarkdownFilePaths() throws -> [String] {
     let missingFiles = markdownFilePaths.filter { !FileManager().fileExists(atPath: $0) }
 
     guard missingFiles.isEmpty else {
-        missingFiles.forEach { path in
-            print(Error.fileDoesNotExist(path).localizedDescription)
-        }
-        exit(1)
+        throw Error.filesDoNotExist(missingFiles)
     }
 
     return markdownFilePaths
@@ -101,11 +100,9 @@ private func process(markdownFilePath: String, markdownText: String, results: in
 }
 
 private func print(results: [ProcessResult]) {
+    guard !results.isEmpty else { return }
     print("Results:\n")
-    print(results
-        .map { $0.description }
-        .joined(separator: "\n")
-    )
+    print(results.map { $0.description }.joined(separator: "\n"), terminator: "")
 }
 
 private func printErrors(_ errors: [Swift.Error]) {
@@ -136,5 +133,5 @@ private func printErrors(_ errors: [Swift.Error]) {
     
     """)
 
-    print(errorStrings.joined(separator: "\n"))
+    print(errorStrings.joined(separator: "\n"), terminator: "")
 }
